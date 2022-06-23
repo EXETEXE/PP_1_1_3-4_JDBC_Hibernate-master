@@ -5,6 +5,7 @@ import com.mysql.jdbc.Driver;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Objects;
 
 public class Util {
     // реализуйте настройку соеденения с БД
@@ -14,8 +15,32 @@ public class Util {
     private static final String password = "HGjd15hj391";
     private static Connection connection;
 
-    public static Connection getConnection() throws SQLException{
+    public static Connection getConnection() {
 
-        return connection = DriverManager.getConnection(url, user, password);
+        try {
+
+            connection = DriverManager.getConnection(url, user, password);
+        } catch (SQLException throwables) {
+
+            throwables.printStackTrace();
+        }
+
+        return connection;
+    }
+
+    public static void closeConnection() {
+
+        try {
+
+            if (connection != null && !connection.isClosed()) {
+
+                connection.close();
+            }
+
+            System.out.println("Соединение закрыто");
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 }

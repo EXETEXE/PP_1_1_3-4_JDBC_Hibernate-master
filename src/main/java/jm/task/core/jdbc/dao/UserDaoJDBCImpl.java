@@ -3,28 +3,15 @@ package jm.task.core.jdbc.dao;
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoJDBCImpl implements UserDao {
 
+    private Connection connection = Util.getConnection();
+
     public UserDaoJDBCImpl() {
-
-    }
-
-    private static void dbUpdate(String sql) {
-
-        try (Connection connection = Util.getConnection(); Statement statement = connection.createStatement()) {
-
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-
-            e.printStackTrace();
-        }
 
     }
 
@@ -37,9 +24,15 @@ public class UserDaoJDBCImpl implements UserDao {
                 " age INTEGER, " +
                 " PRIMARY KEY ( id ))";
 
-        dbUpdate(sql);
+        try (Statement statement = connection.createStatement()) {
 
-        System.out.println("Таблица user создана или уже существует");
+            statement.executeUpdate(sql);
+
+            System.out.println("Таблица user создана или уже существует");
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
 
     }
 
@@ -47,31 +40,51 @@ public class UserDaoJDBCImpl implements UserDao {
 
         String sql = "DROP TABLE IF EXISTS user";
 
-        dbUpdate(sql);
+        try (Statement statement = connection.createStatement()) {
 
-        System.out.println("Таблица user успешно удалена");
+            statement.executeUpdate(sql);
+
+            System.out.println("Таблица user успешно удалена");
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+
     }
 
     public void saveUser(String name, String lastName, byte age) {
 
-        String sql = "INSERT INTO user(name, lastName, age) values (" +
-                "'" + name + "'," +
-                "'" + lastName + "'," +
-                age +
-                ");";
+        String sql = "INSERT INTO user(name, lastName, age) values (?, ?, ?)";
 
-        dbUpdate(sql);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-        System.out.println("User с именем – " + name + " добавлен в базу данных");
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, lastName);
+            preparedStatement.setByte(3, age);
+
+            preparedStatement.executeUpdate();
+
+            System.out.println("User с именем – " + name + " добавлен в базу данных");
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 
     public void removeUserById(long id) {
 
-        String sql = "DELETE from user where id=" + id + ";";
+        String sql = "DELETE from user where id= ?";
 
-        dbUpdate(sql);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-        System.out.println("Пользователь с id: " + id + " удалён");
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+
+            System.out.println("Пользователь с id: " + id + " удалён");
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+
     }
 
     public List<User> getAllUsers() {
@@ -104,9 +117,14 @@ public class UserDaoJDBCImpl implements UserDao {
 
         String sql = "TRUNCATE TABLE user;";
 
-        dbUpdate(sql);
+        try (Statement statement = connection.createStatement()) {
 
-        System.out.println("Таблица user очищена");
+            statement.executeUpdate(sql);
 
+            System.out.println("Таблица user очищена");
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 }
