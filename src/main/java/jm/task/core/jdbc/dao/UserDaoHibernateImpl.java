@@ -4,6 +4,7 @@ import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -27,6 +28,8 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void createUsersTable() {
 
+        Transaction transaction = null;
+
         String sql = "CREATE TABLE IF NOT EXISTS user " +
                 "(id INTEGER not NULL AUTO_INCREMENT, " +
                 " name VARCHAR(255), " +
@@ -34,90 +37,128 @@ public class UserDaoHibernateImpl implements UserDao {
                 " age INTEGER, " +
                 " PRIMARY KEY ( id ))";
 
+        try (Session session = sessionFactory.getCurrentSession()) {
 
-        Session session = sessionFactory.getCurrentSession();
+            transaction = session.beginTransaction();
 
-        session.beginTransaction();
+            session.createSQLQuery(sql).executeUpdate();
 
-        session.createSQLQuery(sql).executeUpdate();
+            transaction.commit();
 
-        session.getTransaction().commit();
+            System.out.println("Таблица user создана или уже существует");
 
-        System.out.println("Таблица user создана или уже существует");
+        } catch (Exception e) {
 
-        session.close();
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+        }
     }
 
     @Override
     public void dropUsersTable() {
 
+        Transaction transaction = null;
+
         String sql = "DROP TABLE IF EXISTS user";
 
-        Session session = sessionFactory.getCurrentSession();
+        try (Session session = sessionFactory.getCurrentSession()) {
 
-        session.beginTransaction();
+            transaction = session.beginTransaction();
 
-        session.createSQLQuery(sql).executeUpdate();
+            session.createSQLQuery(sql).executeUpdate();
 
-        session.getTransaction().commit();
+            transaction.commit();
 
-        System.out.println("Таблица user удалена");
+            System.out.println("Таблица user удалена");
+        } catch (Exception e) {
 
-        session.close();
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+        }
+
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
 
-        Session session = sessionFactory.getCurrentSession();
+        Transaction transaction = null;
 
-        session.beginTransaction();
+        try (Session session = sessionFactory.getCurrentSession()) {
 
-        session.save(new User(name, lastName, age));
+            transaction = session.beginTransaction();
 
-        session.getTransaction().commit();
+            session.save(new User(name, lastName, age));
 
-        System.out.println("User с именем – " + name + " добавлен в базу данных");
+            transaction.commit();
 
-        session.close();
+            System.out.println("User с именем – " + name + " добавлен в базу данных");
 
+        } catch (Exception e) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+        }
     }
 
     @Override
     public void removeUserById(long id) {
 
-        Session session = sessionFactory.getCurrentSession();
+        Transaction transaction = null;
 
-        session.beginTransaction();
+        try (Session session = sessionFactory.getCurrentSession()) {
 
-        User user = session.get(User.class, id);
+            transaction = session.beginTransaction();
 
-        session.delete(user);
+            User user = session.get(User.class, id);
 
-        session.getTransaction().commit();
+            session.delete(user);
 
-        System.out.println("Пользователь с id: " + id + " удалён");
+            transaction.commit();
 
-        session.close();
+            System.out.println("Пользователь с id: " + id + " удалён");
+
+        } catch (Exception e) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+        }
 
     }
 
     @Override
     public List<User> getAllUsers() {
 
-        Session session = sessionFactory.getCurrentSession();
+        List<User> result = null;
 
-        session.beginTransaction();
+        Transaction transaction = null;
 
-        CriteriaQuery<User> criteriaQuery = session.getCriteriaBuilder().createQuery(User.class);
+        try (Session session = sessionFactory.getCurrentSession()) {
 
-        Root<User> rootEntry = criteriaQuery.from(User.class);
+            transaction = session.beginTransaction();
 
-        criteriaQuery.select(rootEntry);
+            CriteriaQuery<User> criteriaQuery = session.getCriteriaBuilder().createQuery(User.class);
 
-        List<User> result = session.createQuery(criteriaQuery).getResultList();
+            Root<User> rootEntry = criteriaQuery.from(User.class);
 
-        session.close();
+            criteriaQuery.select(rootEntry);
+
+            result = session.createQuery(criteriaQuery).getResultList();
+
+        } catch (Exception e) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+        }
 
         return result;
 
@@ -126,19 +167,27 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void cleanUsersTable() {
 
+        Transaction transaction = null;
+
         String sql = "TRUNCATE TABLE user;";
 
-        Session session = sessionFactory.getCurrentSession();
+        try (Session session = sessionFactory.getCurrentSession()) {
 
-        session.beginTransaction();
+            transaction = session.beginTransaction();
 
-        session.createSQLQuery(sql).executeUpdate();
+            session.createSQLQuery(sql).executeUpdate();
 
-        session.getTransaction().commit();
+            transaction.commit();
 
-        System.out.println("Таблица user очищенна");
+            System.out.println("Таблица user очищенна");
 
-        session.close();
+        } catch (Exception e) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+        }
 
     }
 }
